@@ -26,7 +26,7 @@
 <meta property="og:image" content="http://example.com/2023/05/17/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A802-%E9%83%A8%E7%BD%B2%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6Containerd/containerd-run-container-1.png">
 <meta property="og:image" content="http://example.com/2023/05/17/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A802-%E9%83%A8%E7%BD%B2%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6Containerd/containerd-run-container-2.png">
 <meta property="article:published_time" content="2023-05-17T06:42:46.000Z">
-<meta property="article:modified_time" content="2023-05-17T06:55:00.852Z">
+<meta property="article:modified_time" content="2023-05-17T07:03:24.328Z">
 <meta property="article:author" content="呵呵哒">
 <meta property="article:tag" content="containerd">
 <meta name="twitter:card" content="summary_large_image">
@@ -287,6 +287,7 @@
 <p>理解了上面这两幅图中各个组件之间的交互关系，接下来就可以部署containerd相关组件。</p>
 <p>2.二进制部署containerd<br>这里以CentOS 7为例，演示部署containerd的过程，需要禁用selinux。</p>
 <p>要部署containerd，需要下载3个包:</p>
+<p>本文实验中使用的runc对应版本是:<br>runc 1.1.7<br>containerd 1.7.1<br>cri-tools v1.27.0</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">wget https://github.com/opencontainers/runc/releases/download/v1.0.0-rc93/runc.amd64<br>wget https://github.com/containerd/containerd/releases/download/v1.4.4/containerd-1.4.4-linux-amd64.tar.gz<br>wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.21.0/crictl-v1.21.0-linux-amd64.tar.gz<br></code></pre></td></tr></table></figure>
 
 <p>runc.amd64是runc的二进制文件，containerd-1.4.4-linux-amd64.tar.gz包含containerd和它的containerd-shim以及命令行工具ctr，crictl-v1.21.0-linux-amd64.tar.gz包含CRI的命令行工具crictl。</p>
