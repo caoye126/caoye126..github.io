@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>重学容器-01：Docker、Containerd、Kubernetes之间的渊源</title>
+    <link href="/2023/05/17/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A8-01%EF%BC%9ADocker%E3%80%81Containerd%E3%80%81Kubernetes%E4%B9%8B%E9%97%B4%E7%9A%84%E6%B8%8A%E6%BA%90/"/>
+    <url>/2023/05/17/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A8-01%EF%BC%9ADocker%E3%80%81Containerd%E3%80%81Kubernetes%E4%B9%8B%E9%97%B4%E7%9A%84%E6%B8%8A%E6%BA%90/</url>
+    
+    <content type="html"><![CDATA[<p>话说Kubernetes都弃用Dockershim了，因此是时候学习Containerd了。 本文先简单整理一下Kubernetes、Docker、Containerd之间的渊源和纠葛。</p><p>1.Docker, OCI和Containerd<br>这里略过早期Docker的发展历史，大概就是在docker如日中天的时候，社区要搞容器化标准，成立了OCI(Open Container Initiaiv)，OCI主要包含两个规范，一个是容器运行时规范(runtime-spec)，一个是容器镜像规范(image-spec)。 docker的公司也在OCI中，这里略过在推动标准化过程中各大厂各自心里的”小算盘”和”利益考虑”，docker在这个过程中由一个庞然大物逐渐拆分出了containerd、runc等项目， docker公司将runc捐赠给了OCI，后来将containerd捐赠给了CNCF。</p><p>runc是什么? runc是一个轻量级的命令行工具，可以用它来运行容器。runc遵循OCI标准来创建和运行容器，它算是第一个OCI Runtime标准的参考实现。<br>containerd是什么？containerd的自我介绍中说它是一个开放、可靠的容器运行时，实际上它包含了单机运行一个容器运行时的功能。 containerd为了支持多种OCI Runtime实现，内部使用containerd-shim，shim英文翻译过来是”垫片”的意思，见名知义了，例如为了支持runc，就提供了containerd-shim-runc。<br>经过上面的发展，docker启动一个容器的过程大致是下图所示的流程:</p><p><img src="/docker-run-container.png"></p><p>从上图可以看出，每启动一个容器，实际上是containerd启动了一个containerd-shim-runc进程，即使containerd的挂掉也不会影响到已经启动的容器。</p><p>2.Kubernetes, Docker和Containerd<br>kubernetes的出现是为了解决容器编排的问题，在早期为了支持多个容器引擎，是在Kubernetes内部对多个容器引擎做兼容，例如kubelet启动一个docker-manager的进程直接调用docker的api进行容器的创建。</p><p><img src="/kubelet-run-containerd-0.png"></p><p>后来k8s为了隔离各个容器引擎之间的差异，在docker分出containerd后，k8s也搞出了自己的容器运行时接口(CRI)，CRI的出现是为了统一k8s与不同容器引擎之间交互的接口，与OCI的容器运行时规范不同，CRI更加适合k8s，不仅包含对容器的管理，还引入了k8s中Pod的概念及对Pod生命周期的管理。 k8s开始把containerd接入CRI标准。kubelet通过CRI接口调用docker-shim，进一步调用docker api。此时在每个k8s节点上kubelet大致按下图流程启动容器:</p><p><img src="/kubelet-run-containerd-1.png"></p><p>为了更好的将containerd接入到CRI标准中，k8s又搞出了cri-containerd项目，cri-containerd是一个守护进程用来实现kubelet和containerd之间的交互，此时k8s节点上kubelet大致按下图流程启动容器:</p><p><img src="/kubelet-run-containerd-2.png"></p><p>在上图中cri-containerd和containerd还是两个独立的进程，他们之间通过gRPC通信，后来在Containerd 1.1时，将cri-containerd改成了Containerd的CRI插件，CRI插件位于containerd内部，这让k8s启动Pod时的通信更加高效，此时k8s节点上kubelet大致按下图流程启动容器:</p><p><img src="/kubelet-run-containerd-3.png"></p><p>为了更贴近OCI，k8s又搞了一个轻量级的容器运行时cri-o，所以在k8s”抛弃”dockershim后，可供我们选择的容器运行时有containerd和cri-o。</p><p>小结一下kubelet启动容器的发展历程:</p><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">早期: kubelet --&gt; docker-manager --&gt; docker<br>中期: kubelet -CRI-&gt; docker-shim --&gt; docker --&gt; containerd --&gt; runc<br>中期: kubelet -CRI-&gt; cri-containerd --&gt; containerd --&gt; runc<br>当前: kubelet -CRI-&gt; containerd(CRI plugin) --&gt; runc<br>当前: kubelet -CRI-&gt; cri-o --&gt; runc<br></code></pre></td></tr></table></figure><p>3.总结<br>docker是一个伟大的项目，在理清Kubernetes、Containerd和Docker之间的关系后，可以看出docker为oci贡献了runtime spec的标准参考实现runc，另外oci的image spec镜像规范也是以Docker镜像规范V2为基础制定的，docker还为k8s贡献了一个稳定可靠的容器运行时containerd。 虽然k8s后续将不再支持dockershim，但Docker本身仍然可以作为本地开发、测试和单机容器部署的利器。</p><p>大致了解了containerd、runc、docker都是什么后，下一阶段我们一起来学习如何部署containerd这个容器运行时，并体验启动一个containerd容器。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>kubernetes</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>docker</tag>
+      
+      <tag>kubernetes</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>golang-执行特殊字符的shell</title>
     <link href="/2023/04/13/golang-%E6%89%A7%E8%A1%8C%E7%89%B9%E6%AE%8A%E5%AD%97%E7%AC%A6%E7%9A%84shell/"/>
     <url>/2023/04/13/golang-%E6%89%A7%E8%A1%8C%E7%89%B9%E6%AE%8A%E5%AD%97%E7%AC%A6%E7%9A%84shell/</url>
