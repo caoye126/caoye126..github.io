@@ -1,0 +1,683 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/a6xd9-y093t-001.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="呵呵哒">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="对于用惯了docker cli的用户来说，containerd的命令行工具ctr使用起来不是很顺手，此时别慌，还有另外一个命令行工具项目nerdctl可供我们选择。 nerdctl是一个与docker cli风格兼容的containerd的cli工具。 nerdctl已经作为子项目加入了containerd项目，它的github地址是https:&#x2F;&#x2F;github.com&#x2F;containerd&#x2F;ne">
+<meta property="og:type" content="article">
+<meta property="og:title" content="重学容器04: containerd的高阶命令行工具nerdctl">
+<meta property="og:url" content="http://example.com/2023/05/17/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A804-containerd%E7%9A%84%E9%AB%98%E9%98%B6%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7nerdctl/index.html">
+<meta property="og:site_name" content="呵呵哒的小站">
+<meta property="og:description" content="对于用惯了docker cli的用户来说，containerd的命令行工具ctr使用起来不是很顺手，此时别慌，还有另外一个命令行工具项目nerdctl可供我们选择。 nerdctl是一个与docker cli风格兼容的containerd的cli工具。 nerdctl已经作为子项目加入了containerd项目，它的github地址是https:&#x2F;&#x2F;github.com&#x2F;containerd&#x2F;ne">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-05-17T12:48:11.000Z">
+<meta property="article:modified_time" content="2023-05-17T12:57:01.209Z">
+<meta property="article:author" content="呵呵哒">
+<meta property="article:tag" content="containerd">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>重学容器04: containerd的高阶命令行工具nerdctl - 呵呵哒的小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 40vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/post-bg.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="重学容器04: containerd的高阶命令行工具nerdctl"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-05-17 20:48" pubdate>
+          2023年5月17日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          53 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">重学容器04: containerd的高阶命令行工具nerdctl</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>对于用惯了docker cli的用户来说，containerd的命令行工具ctr使用起来不是很顺手，此时别慌，还有另外一个命令行工具项目nerdctl可供我们选择。 nerdctl是一个与docker cli风格兼容的containerd的cli工具。 nerdctl已经作为子项目加入了containerd项目，它的github地址是<a target="_blank" rel="noopener" href="https://github.com/containerd/nerdctl%EF%BC%8C%E8%80%8C%E4%B8%94%E4%BB%8E%E6%9C%80%E8%BF%91%E7%9A%84nerdctl">https://github.com/containerd/nerdctl，而且从最近的nerdctl</a> 0.8开始，nerdctl直接兼容了docker compose的语法(不包含swarm)， 这很大提高了直接将containerd作为本地开发、测试和单机容器部署使用的体验。本来k8s后续将不再支持dockershim，docker在k8s社区的地位急剧下降，现在单机直接使用containerd易用性也不断被完善，也许docker的辉煌已经远去了。</p>
+<p>实际上nerdctl compose实现的是Compose Specification规范， 这个规范是从自Docker Compose file version 3 specification规范发展而来的。</p>
+<p>1.安装nerdctl<br>containerd 1.5最近刚刚发布，这里先把测试机上的containerd升级到1.5，直接替换containerd的二进制文件，重启containerd的systemd服务即可，升级过程略过。 升级完成后查看客户端和服务端版本均已经是1.5.0:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs shell">ctr version<br>Client:<br>  Version:  v1.5.0<br>  Revision: 8c906ff108ac28da23f69cc7b74f8e7a470d1df0<br>  Go version: go1.16.3<br><br>Server:<br>  Version:  v1.5.0<br>  Revision: 8c906ff108ac28da23f69cc7b74f8e7a470d1df0<br>  UUID: dee82270-b4b4-429c-befa-45df1421da7e<br></code></pre></td></tr></table></figure>
+
+<p>注意在安装nerdctl之前，需要确认安装了它的依赖组件(runc、containerd、cni)，containerd和cni的详细安装步骤可以参考本系列文章第2节和第3节中的内容。</p>
+<p>安装nerdctl:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">wget https://github.com/containerd/nerdctl/releases/download/v0.8.1/nerdctl-0.8.1-linux-amd64.tar.gz<br>tar -zxvf nerdctl-0.8.1-linux-amd64.tar.gz nerdctl &amp;&amp; mv nerdctl /usr/local/containerd/bin/<br>ln -s /usr/local/containerd/bin/nerdctl /usr/local/bin/nerdctl<br></code></pre></td></tr></table></figure>
+
+<p>打印一下版本信息:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl version<br>Client:<br> Version:       v0.8.1<br> Git commit:    e1601447477c38ceb46c9c88418af399f79b1d6a<br><br>Server:<br> containerd:<br>  Version:      v1.5.0<br>  Revision:     8c906ff108ac28da23f69cc7b74f8e7a470d1df0<br></code></pre></td></tr></table></figure>
+
+<p>2.nerdctl初体验<br>查看镜像:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl images<br>REPOSITORY    TAG           IMAGE ID        CREATED        SIZE<br>redis         alpine3.13    f9577ac6e68c    11 days ago    10.4 MiB<br></code></pre></td></tr></table></figure>
+
+<p>启动一个redis容器:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl run -d --name redis redis:alpine3.13<br><br>nerdctl ps<br>CONTAINER ID    IMAGE                                 COMMAND                   CREATED           STATUS    PORTS    NAMES<br>709665b06ab1    docker.io/library/redis:alpine3.13    &quot;docker-entrypoint.s…&quot;    28 seconds ago    Up                 redis<br></code></pre></td></tr></table></figure>
+
+<p>进入容器内部:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl exec -it redis sh<br>/data # ip addr<br>1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN qlen 1<br>    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00<br>    inet 127.0.0.1/8 scope host lo<br>       valid_lft forever preferred_lft forever<br>    inet6 ::1/128 scope host<br>       valid_lft forever preferred_lft forever<br>3: eth0@if19: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UP<br>    link/ether 1a:84:4b:bb:1f:43 brd ff:ff:ff:ff:ff:ff<br>    inet 10.4.0.4/24 brd 10.4.0.255 scope global eth0<br>       valid_lft forever preferred_lft forever<br>    inet6 fe80::1884:4bff:febb:1f43/64 scope link tentative dadfailed<br>       valid_lft forever preferred_lft forever<br></code></pre></td></tr></table></figure>
+
+<p>查看宿主机上的网桥和veth对设备:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs shell">ls /var/lib/cni/networks/bridge/<br>10.4.0.4  last_reserved_ip.0  lock<br><br>ip addr<br>......<br>16: nerdctl0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP qlen 1000<br>    link/ether 3e:92:4a:37:cb:d3 brd ff:ff:ff:ff:ff:ff<br>    inet 10.4.0.1/24 brd 10.4.0.255 scope global nerdctl0<br>       valid_lft forever preferred_lft forever<br>    inet6 fe80::3c92:4aff:fe37:cbd3/64 scope link<br>       valid_lft forever preferred_lft forever<br>19: veth98611773@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue master nerdctl0 state UP<br>    link/ether 2e💿71:38:3d:7b brd ff:ff:ff:ff:ff:ff link-netnsid 0<br>    inet6 fe80::2ccd:71ff:fe38:3d7b/64 scope link<br>       valid_lft forever preferred_lft forever<br><br></code></pre></td></tr></table></figure>
+
+<p>和docker一样，nerdctl也有一个子命令network:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl network ls<br>NETWORK ID    NAME         FILE<br>0             bridge<br>              host<br>              none<br></code></pre></td></tr></table></figure>
+
+<p>可以看一下默认的bridge网络的cni配置:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs shell">[<br>    &#123;<br>        &quot;CNI&quot;: &#123;<br>            &quot;cniVersion&quot;: &quot;0.4.0&quot;,<br>            &quot;name&quot;: &quot;bridge&quot;,<br>            &quot;nerdctlID&quot;: 0,<br>            &quot;plugins&quot;: [<br>                &#123;<br>                    &quot;type&quot;: &quot;bridge&quot;,<br>                    &quot;bridge&quot;: &quot;nerdctl0&quot;,<br>                    &quot;isGateway&quot;: true,<br>                    &quot;ipMasq&quot;: true,<br>                    &quot;hairpinMode&quot;: true,<br>                    &quot;ipam&quot;: &#123;<br>                        &quot;type&quot;: &quot;host-local&quot;,<br>                        &quot;routes&quot;: [<br>                            &#123;<br>                                &quot;dst&quot;: &quot;0.0.0.0/0&quot;<br>                            &#125;<br>                        ],<br>                        &quot;ranges&quot;: [<br>                            [<br>                                &#123;<br>                                    &quot;subnet&quot;: &quot;10.4.0.0/24&quot;,<br>                                    &quot;gateway&quot;: &quot;10.4.0.1&quot;<br>                                &#125;<br>                            ]<br>                        ]<br>                    &#125;<br>                &#125;,<br>                &#123;<br>                    &quot;type&quot;: &quot;portmap&quot;,<br>                    &quot;capabilities&quot;: &#123;<br>                        &quot;portMappings&quot;: true<br>                    &#125;<br>                &#125;,<br>                &#123;<br>                    &quot;type&quot;: &quot;firewall&quot;<br>                &#125;,<br>                &#123;<br>                    &quot;type&quot;: &quot;tuning&quot;<br>                &#125;<br>            ]<br>        &#125;,<br>        &quot;NerdctlID&quot;: 0<br>    &#125;<br>]<br></code></pre></td></tr></table></figure>
+
+<p>可以看出nertctl启动的容器的网络的背后实际上仍然是CNI在工作。 nerctl run命令在启动一个容器时，可以通过–net指定容器连接到一个网络，取值可以是bridge、host、或none，默认是bridge。所以宿主机上出现了nerdctl0网桥和eth98611773@if3。</p>
+<p>3.nerdctl兼容docker compose<br>这里编写一个用于测试的docker-compose.yml文件:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs shell">version: &#x27;3&#x27;<br>services:<br>  db:<br>    image: postgres:10.1<br>    environment:<br>      - POSTGRES_USER=miniflux<br>      - POSTGRES_PASSWORD=secret<br>    volumes:<br>      - /home/miniflux/miniflux-db:/var/lib/postgresql/data<br>  db-migrate:<br>    image: miniflux/miniflux:2.0.29<br>    command: [&quot;/usr/bin/miniflux&quot;, &quot;-migrate&quot;]<br>    depends_on:<br>      - db<br>    environment:<br>      - DATABASE_URL=postgres://miniflux:secret@db/miniflux?sslmode=disable<br>  miniflux:<br>    image: miniflux/miniflux:2.0.29<br>    ports:<br>      - &quot;8080:8080&quot;<br>    depends_on:<br>      - db-migrate<br>    environment:<br>      - DATABASE_URL=postgres://miniflux:secret@db/miniflux?sslmode=disable<br>```  <br><br>miniflux是一个开源的RSS阅读器，主要有两个服务组成miniflux web服务和postgres数据库，可以部署Miniflux作为我们自己的RSS服务。 上面的docker compose文件之前已经使用docker-compose在docker上部署过，这里我们实验一下nerdctl在containerd上部署。<br><br>在宿主机上创建挂载出来的数据目录:<br><br>```shell<br>cd /home<br>mkdir miniflux<br>cd miniflux<br>mkdir miniflux-db<br></code></pre></td></tr></table></figure>
+
+<p>使用nerdctl执行compose命令:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl compose -f docker-compose.yml up -d<br>INFO[0000] Creating network miniflux_default<br>INFO[0000] Ensuring image postgres:10.1<br>INFO[0000] Ensuring image miniflux/miniflux:latest<br>INFO[0000] Creating container miniflux_miniflux_1<br>INFO[0000] Creating container miniflux_db_1<br><br>nerdctl ps -a<br>CONTAINER ID    IMAGE                                 COMMAND                   CREATED          STATUS                      PORTS                     NAMES<br>219d71b12daa    docker.io/miniflux/miniflux:2.0.29    &quot;/usr/bin/miniflux&quot;       6 minutes ago    Up                          0.0.0.0:8080-&gt;8080/tcp    miniflux_miniflux_1<br>3b5275fdb361    docker.io/miniflux/miniflux:2.0.29    &quot;/usr/bin/miniflux -…&quot;    6 minutes ago    Exited (1) 6 minutes ago                              miniflux_db-migrate_1<br>540239bdd876    docker.io/library/postgres:10.1       &quot;docker-entrypoint.s…&quot;    6 minutes ago    Up                                                    miniflux_db_1<br></code></pre></td></tr></table></figure>
+
+<p>注:实际使用nerdctl compose启动容器时，因为postgres启动比较慢，而compose里的depends_on只是描述container启动后就认为依赖OK了，所以可能会出现miniflux_db-migrate_1和miniflux_miniflux_1无法启动的情况。 此时，手动按顺序执行nerdctl start miniflux_db-migrate_1 &amp;&amp; nerdctl logs miniflux_db-migrate_1和nerdctl start miniflux_miniflux_1 &amp;&amp; nerdctl logs miniflux_miniflux_1最终确保miniflux_miniflux_1和miniflux_db_1都进入up状态即可。</p>
+<p>创建admin用户:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl exec -it &lt;container-name&gt; /usr/bin/miniflux -create-admin<br>Enter Username: admin<br>Enter Password:<br></code></pre></td></tr></table></figure>
+
+<p>部署成功后可以使用<a href="http://ip:8080访问。">http://ip:8080访问。</a></p>
+<p>总结<br>可以看出nerdctl的使用方式和docker cli几乎一致，在启动容器和管理容器方面，从docker过渡到使用nerdctl+containerd几乎没有任何学习成本。 有了nerdctl，单机玩耍containerd不再是梦。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/containerd/" class="category-chain-item">containerd</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/containerd/">#containerd</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>重学容器04: containerd的高阶命令行工具nerdctl</div>
+      <div>http://example.com/2023/05/17/重学容器04-containerd的高阶命令行工具nerdctl/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>呵呵哒</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年5月17日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/05/17/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A802-%E9%83%A8%E7%BD%B2%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6Containerd/" title="重学容器02: 部署容器运行时Containerd">
+                        <span class="hidden-mobile">重学容器02: 部署容器运行时Containerd</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
