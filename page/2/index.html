@@ -222,6 +222,69 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2023/03/21/pipeline-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-4-parallel-pending%E9%97%AE%E9%A2%98/" target="_self">
+          pipeline-最佳实践-4-parallel-pending问题
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/03/21/pipeline-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-4-parallel-pending%E9%97%AE%E9%A2%98/" target="_self">
+        <div>
+          在pipeline类型的job 中启用 parallel 后发现,会有并行的job 出现 pending 等待问题. 实际上 并行 效果没有体现出来.查看 等待状态的job 有提示 : Waiting for next available executor 解决方法: 调整 可执行器的 可用数量 , 默认master的 可执行器 数量 为 2 . 一旦发起并行, executor 不够用. Das
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2023-03-21 10:15" pubdate>
+              2023-03-21
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/jenkins/" class="category-chain-item">jenkins</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/jenkins/">#jenkins</a>
+            
+              <a href="/tags/pipeline/">#pipeline</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2023/03/16/pipeline-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-5-%E5%8F%AA%E4%BF%9D%E7%95%99%E6%9C%80%E8%BF%91%E7%9A%84job/" target="_self">
           pipeline-最佳实践-5 只保留最近的job
         </a>
@@ -786,69 +849,6 @@
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/docker/">#docker</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2023/03/14/docker-%E5%9F%BA%E4%BA%8E-buildx-%E6%9E%84%E5%BB%BA%E8%B7%A8%E5%B9%B3%E5%8F%B0%E9%95%9C%E5%83%8F/" target="_self">
-          docker 基于 buildx 构建跨平台镜像
-        </a>
-      </h1>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/03/14/docker-%E5%9F%BA%E4%BA%8E-buildx-%E6%9E%84%E5%BB%BA%E8%B7%A8%E5%B9%B3%E5%8F%B0%E9%95%9C%E5%83%8F/" target="_self">
-        <div>
-          docker 基于 buildx 构建跨平台镜像buildx 现在作为一个跨平台构建工具已经十分的成熟了.在 x86_64 平台上使用 docker buildx 构建多平台的 docker image.在 Docker 19.03+ 版本中可以使用 docker buildx build 命令使用 BuildKit 构建镜像。该命令支持 –platform 参数可以同时构建支持多种系统架构的 D
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-03-14 10:24" pubdate>
-              2023-03-14
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/docker/" class="category-chain-item">docker</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/docker/">#docker</a>
-            
-              <a href="/tags/buildx/">#buildx</a>
             
           </div>
         

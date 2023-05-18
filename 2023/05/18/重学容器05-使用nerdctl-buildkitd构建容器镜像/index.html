@@ -1,0 +1,666 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/a6xd9-y093t-001.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="呵呵哒">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1.容器核心技术和Docker的创新:镜像技术容器技术主要包括Cgroup和Namesapce这两个内核级别的特性。 Cgroup是control group的缩写即控制组，主要用来做资源控制，可以将一组进程放到一个控制组里，通过给这个控制组分配可用资源，达到控制这组进程可用资源的目的，对不同资源的具体管理是由各个子系统分工完成的，例如cpu控制cpu使用率，memory控制内存的使用上限等等。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="重学容器05: 使用nerdctl + buildkitd构建容器镜像">
+<meta property="og:url" content="http://example.com/2023/05/18/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A805-%E4%BD%BF%E7%94%A8nerdctl-buildkitd%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F/index.html">
+<meta property="og:site_name" content="呵呵哒的小站">
+<meta property="og:description" content="1.容器核心技术和Docker的创新:镜像技术容器技术主要包括Cgroup和Namesapce这两个内核级别的特性。 Cgroup是control group的缩写即控制组，主要用来做资源控制，可以将一组进程放到一个控制组里，通过给这个控制组分配可用资源，达到控制这组进程可用资源的目的，对不同资源的具体管理是由各个子系统分工完成的，例如cpu控制cpu使用率，memory控制内存的使用上限等等。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-05-18T01:34:56.000Z">
+<meta property="article:modified_time" content="2023-05-18T01:50:17.683Z">
+<meta property="article:author" content="呵呵哒">
+<meta property="article:tag" content="containerd">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>重学容器05: 使用nerdctl + buildkitd构建容器镜像 - 呵呵哒的小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 40vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/post-bg.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="重学容器05: 使用nerdctl + buildkitd构建容器镜像"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-05-18 09:34" pubdate>
+          2023年5月18日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          60 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">重学容器05: 使用nerdctl + buildkitd构建容器镜像</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>1.容器核心技术和Docker的创新:镜像技术<br>容器技术主要包括Cgroup和Namesapce这两个内核级别的特性。 Cgroup是control group的缩写即控制组，主要用来做资源控制，可以将一组进程放到一个控制组里，通过给这个控制组分配可用资源，达到控制这组进程可用资源的目的，对不同资源的具体管理是由各个子系统分工完成的，例如cpu控制cpu使用率，memory控制内存的使用上限等等。 Namespace即命名空间，主要用来做访问隔离，针对一类资源进行抽象封装给一个容器使用，对于这类资源，每个容器都有自己的抽象，它们之间彼此不可见实现了访问隔离，例如PID namespace用来隔离进程号，User namespace用来隔离用户和用户组，linux共有6种命名空间。 另外，容器还需要rootfs实现文件系统隔离。rootfs是一个容器启动时其内部进程可见的文件系统，在容器内用户视角下修改文件时，一般会采用Copy-On-Write(COW)机制。镜像的本质就是一个rootfs。</p>
+<p>从某种程度上来说容器 &#x3D; Cgroup + Namespace + rootfs + 容器引擎，但Cgroup、Namespace这些特性都是linux中早就存在的技术，因此有人说Docker是”新瓶装旧酒”，在Docker之前也有其他使用这些技术实现类似容器功能的实践，例如当年号称第一个开源PaaS平台的Cloud Foundry在将其固定格式应用宝部署到虚拟机后，也使用了Linux提供的Namespace和Cgroup技术对不同应用进行隔离和资源限制。而Docker当年却是凭着Docker镜像这个创新脱颖而出，可以说镜像技术是Docker成功的最重要之一。</p>
+<p>前面我们已经使用nerdctl+containerd实现了在容器管理方面像直接使用docker一样的体验，本节我们更近一般学习nerdctl+buildkitd这对组合，实现镜像构建和镜像管理的功能。</p>
+<p>2.buildkit简介<br>buildkit项目也是Docker公司的人开源出来的一个构建工具包，支持OCI标准的镜像构建。它主要包含以下部分:</p>
+<p>服务端buildkitd，当前支持runc和containerd作为worker，默认是runc，我们这里使用containerd<br>客户端buildctl，负责解析Dockerfile，并向服务端buildkitd发出构建请求<br>可以看出buildkit是典型的C&#x2F;S架构，client和server可以不在一台服务器上。而nerdctl在构建镜像方面也可以作为buildkitd的客户端，我们这里使用nerdctl。</p>
+<p>3.部署buildkitd<br>下面在测试服务器上部署buildkitd。下载完成后，仍然将buildctl和buildkitd安装到&#x2F;usr&#x2F;local&#x2F;containerd目录中:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs shell">wget https://github.com/moby/buildkit/releases/download/v0.11.6/buildkit-v0.11.6.linux-amd64.tar.gz<br>tar -zxvf buildkit-v0.11.6.linux-amd64.tar.gz -C /usr/local/containerd/<br><br>tree /usr/local/containerd/bin/ | grep build<br>├── buildctl<br>├── buildkitd<br>├── buildkit-qemu-aarch64<br>├── buildkit-qemu-arm<br>├── buildkit-qemu-i386<br>├── buildkit-qemu-ppc64le<br>├── buildkit-qemu-riscv64<br>├── buildkit-qemu-s390x<br>├── buildkit-runc<br><br>ln -s /usr/local/containerd/bin/buildkitd /usr/local/bin/buildkitd<br>ln -s /usr/local/containerd/bin/buildctl /usr/local/bin/<br></code></pre></td></tr></table></figure>
+
+<p>创建systemd服务相关文件&#x2F;etc&#x2F;systemd&#x2F;system&#x2F;buildkit.socket:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs shell">[Unit]<br>Description=BuildKit<br>Documentation=https://github.com/moby/buildkit<br><br>[Socket]<br>ListenStream=%t/buildkit/buildkitd.sock<br><br>[Install]<br>WantedBy=sockets.target<br></code></pre></td></tr></table></figure>
+
+<p>&#x2F;etc&#x2F;systemd&#x2F;system&#x2F;buildkit.service:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs shell">[Unit]<br>Description=BuildKit<br>Requires=buildkit.socket<br>After=buildkit.socket<br>Documentation=https://github.com/moby/buildkit<br><br>[Service]<br>ExecStart=/usr/local/bin/buildkitd --oci-worker=false --containerd-worker=true<br><br>[Install]<br>WantedBy=multi-user.target<br></code></pre></td></tr></table></figure>
+
+<p>启动buildkitd:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">systemctl daemon-reload<br>systemctl enable buildkit<br>systemctl start buildkit<br></code></pre></td></tr></table></figure>
+
+<p>4.构建alpine和busybox基础镜像<br>alpine linux的核心特点是体积小、简单和安全，因此很多人选择alpine镜像作为基础镜像。 我们编写一个Dockerfile在docker官方alpine镜像的基础上，安装glibc，同时配置中国时区:</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> alpine:<span class="hljs-number">3.13</span>.<span class="hljs-number">5</span><br><br><span class="hljs-comment"># Here we install GNU libc (aka glibc) and set C.UTF-8 locale as default</span><br><br><span class="hljs-keyword">ENV</span> LANG=C.UTF-<span class="hljs-number">8</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;**** install packages****&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    sed -i <span class="hljs-string">&#x27;s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g&#x27;</span> /etc/apk/repositories &amp;&amp;\</span><br><span class="language-bash">    ALPINE_GLIBC_BASE_URL=<span class="hljs-string">&quot;https://github.com/sgerrand/alpine-pkg-glibc/releases/download&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    ALPINE_GLIBC_PACKAGE_VERSION=<span class="hljs-string">&quot;2.33-r0&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    ALPINE_GLIBC_BASE_PACKAGE_FILENAME=<span class="hljs-string">&quot;glibc-<span class="hljs-variable">$ALPINE_GLIBC_PACKAGE_VERSION</span>.apk&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    ALPINE_GLIBC_BIN_PACKAGE_FILENAME=<span class="hljs-string">&quot;glibc-bin-<span class="hljs-variable">$ALPINE_GLIBC_PACKAGE_VERSION</span>.apk&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    ALPINE_GLIBC_I18N_PACKAGE_FILENAME=<span class="hljs-string">&quot;glibc-i18n-<span class="hljs-variable">$ALPINE_GLIBC_PACKAGE_VERSION</span>.apk&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    apk add --no-cache --virtual=.build-dependencies wget ca-certificates &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">echo</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;-----BEGIN PUBLIC KEY-----\</span></span><br><span class="hljs-string"><span class="language-bash">        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApZ2u1KJKUu/fW4A25y9m\</span></span><br><span class="hljs-string"><span class="language-bash">        y70AGEa/J3Wi5ibNVGNn1gT1r0VfgeWd0pUybS4UmcHdiNzxJPgoWQhV2SSW1JYu\</span></span><br><span class="hljs-string"><span class="language-bash">        tOqKZF5QSN6X937PTUpNBjUvLtTQ1ve1fp39uf/lEXPpFpOPL88LKnDBgbh7wkCp\</span></span><br><span class="hljs-string"><span class="language-bash">        m2KzLVGChf83MS0ShL6G9EQIAUxLm99VpgRjwqTQ/KfzGtpke1wqws4au0Ab4qPY\</span></span><br><span class="hljs-string"><span class="language-bash">        KXvMLSPLUp7cfulWvhmZSegr5AdhNw5KNizPqCJT8ZrGvgHypXyiFvvAH5YRtSsc\</span></span><br><span class="hljs-string"><span class="language-bash">        Zvo9GI2e2MaZyo9/lvb+LbLEJZKEQckqRj4P26gmASrZEPStwc+yqy1ShHLA0j6m\</span></span><br><span class="hljs-string"><span class="language-bash">        1QIDAQAB\</span></span><br><span class="hljs-string"><span class="language-bash">-----END PUBLIC KEY-----&quot;</span> | sed <span class="hljs-string">&#x27;s/*/\n/g&#x27;</span> &gt; <span class="hljs-string">&quot;/etc/apk/keys/sgerrand.rsa.pub&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    wget \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_BASE_URL</span>/<span class="hljs-variable">$ALPINE_GLIBC_PACKAGE_VERSION</span>/<span class="hljs-variable">$ALPINE_GLIBC_BASE_PACKAGE_FILENAME</span>&quot;</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_BASE_URL</span>/<span class="hljs-variable">$ALPINE_GLIBC_PACKAGE_VERSION</span>/<span class="hljs-variable">$ALPINE_GLIBC_BIN_PACKAGE_FILENAME</span>&quot;</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_BASE_URL</span>/<span class="hljs-variable">$ALPINE_GLIBC_PACKAGE_VERSION</span>/<span class="hljs-variable">$ALPINE_GLIBC_I18N_PACKAGE_FILENAME</span>&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    apk add --no-cache \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_BASE_PACKAGE_FILENAME</span>&quot;</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_BIN_PACKAGE_FILENAME</span>&quot;</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_I18N_PACKAGE_FILENAME</span>&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    \</span><br><span class="language-bash">    <span class="hljs-built_in">rm</span> <span class="hljs-string">&quot;/etc/apk/keys/sgerrand.rsa.pub&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    /usr/glibc-compat/bin/localedef --force --inputfile POSIX --charmap UTF-8 <span class="hljs-string">&quot;<span class="hljs-variable">$LANG</span>&quot;</span> || <span class="hljs-literal">true</span> &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;export LANG=<span class="hljs-variable">$LANG</span>&quot;</span> &gt; /etc/profile.d/locale.sh &amp;&amp; \</span><br><span class="language-bash">    \</span><br><span class="language-bash">    apk del glibc-i18n &amp;&amp; \</span><br><span class="language-bash">    \</span><br><span class="language-bash">    <span class="hljs-built_in">rm</span> <span class="hljs-string">&quot;/root/.wget-hsts&quot;</span> &amp;&amp; \</span><br><span class="language-bash">    apk del .build-dependencies &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">rm</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_BASE_PACKAGE_FILENAME</span>&quot;</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_BIN_PACKAGE_FILENAME</span>&quot;</span> \</span><br><span class="language-bash">        <span class="hljs-string">&quot;<span class="hljs-variable">$ALPINE_GLIBC_I18N_PACKAGE_FILENAME</span>&quot;</span></span><br><br><span class="hljs-keyword">RUN</span><span class="language-bash"> apk update --no-cache &amp;&amp; apk add ca-certificates --no-cache &amp;&amp; \</span><br><span class="language-bash">    apk add tzdata --no-cache &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">ln</span> -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Asia/Shanghai&quot;</span> &gt; /etc/timezone</span><br></code></pre></td></tr></table></figure>
+
+<p>构建alpine基础镜像:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl build -t base-alpine .<br><br>nerdctl images<br>WARN[0000] unparsable image name &quot;overlayfs@sha256:8628f76ed129c628eccb2259cf61a3138adac73247565f04fb00ea79fab6ae28&quot;<br>REPOSITORY     TAG                  IMAGE ID        CREATED          SIZE<br>base-alpine    latest               8628f76ed129    3 minutes ago    8.8 MiB<br>                                    8628f76ed129    15 hours ago     8.8 MiB<br></code></pre></td></tr></table></figure>
+
+<p>接下来构建busybox基础镜像，busybox是一个集成了一百多个最常用的Linux命令和工具的软件工具箱，它在单一的可执行文件中提供了精简的工具集，有人把busybox作为linux系统的瑞士军刀， 这里编写一个Dockerfile在docker官方busybox镜像的基础上：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> busybox:<span class="hljs-number">1.33</span>.<span class="hljs-number">1</span>-glibc<br><br><span class="hljs-keyword">COPY</span><span class="language-bash"> zoneinfo /usr/share/zoneinfo/</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> <span class="hljs-built_in">ln</span> -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &amp;&amp; <span class="hljs-built_in">echo</span> <span class="hljs-string">&#x27;Asia/Shanghai&#x27;</span> &gt;/etc/timezone</span><br></code></pre></td></tr></table></figure>
+
+<p>构建busybox基础镜像:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">cp -R /usr/share/zoneinfo .<br>nerdctl build -t base-busybox .<br></code></pre></td></tr></table></figure>
+
+<p>将前面构建的两个基础镜像推送到镜像仓库:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl image tag base-alpine:latest harbor.mycompany.com/base/base-alpine:latest<br>nerdctl image tag base-busybox:latest harbor.mycompany.com/base/base-busybox:latest<br><br>nerdctl login -u username -p password harbor.mycompany.com<br><br>nerdctl push harbor.mycompany.com/base/base-alpine:latest<br>nerdctl push harbor.mycompany.com/base/base-busybox:<br></code></pre></td></tr></table></figure>
+
+<p>5.编写Web应用并完成镜像构建<br>下面我们用go写一个简单hello world的web应用main.go:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br> <span class="hljs-string">&quot;io&quot;</span><br> <span class="hljs-string">&quot;log&quot;</span><br> <span class="hljs-string">&quot;net/http&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br> handler := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;<br>  io.WriteString(w, <span class="hljs-string">&quot;Hello, world!\n&quot;</span>)<br> &#125;<br> http.HandleFunc(<span class="hljs-string">&quot;/hello&quot;</span>, handler)<br> err := http.ListenAndServe(<span class="hljs-string">&quot;:8080&quot;</span>, <span class="hljs-literal">nil</span>)<br> <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>  log.Fatal(err)<br> &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>编写构建这个程序的Dockerfile：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> golang:<span class="hljs-number">1.16</span>.<span class="hljs-number">4</span>-alpine3.<span class="hljs-number">13</span> as builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /go/src/hello</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> main.go .</span><br><span class="hljs-keyword">ENV</span> GO111MODULE=off<br><span class="hljs-keyword">RUN</span><span class="language-bash"> go build .</span><br><br><span class="hljs-keyword">FROM</span> harbor.mycompany.com/base/base-alpine:latest<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app/</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=0 /go/src/hello/hello .</span><br><span class="hljs-keyword">USER</span> nobody<br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;./hello&quot;</span>]</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">8080</span><br></code></pre></td></tr></table></figure>
+
+<p>这里使用多阶段构建，golang:1.16.4-alpine3.13只在构建阶段会用到，go build出的二进制文件在构建的第二阶段被拷贝到base-alpine中。 使用多阶段构建可以确保构建出的应用服务镜像体积尽可能的小。</p>
+<p>构建这个程序的镜像:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl build -t go-web-hello .<br></code></pre></td></tr></table></figure>
+
+<p>启动容器并测试:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl run -p 8080:8080 -d go-web-hello<br><br>curl localhost:8080/hello<br>Hello, world!<br></code></pre></td></tr></table></figure>
+
+<p>6.总结<br>通过本节的学习，使用nerdctl + buildkitd也可以轻松的完成容器镜像的构建。 使用containerd及nerdctl，buildkit等工具已经可以完全替代docker在镜像构建、单机启动容器和管理容器的功能了。</p>
+<p>转载自: <a target="_blank" rel="noopener" href="https://blog.frognew.com/2021/05/relearning-container-05.html">https://blog.frognew.com/2021/05/relearning-container-05.html</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/containerd/">#containerd</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>重学容器05: 使用nerdctl + buildkitd构建容器镜像</div>
+      <div>http://example.com/2023/05/18/重学容器05-使用nerdctl-buildkitd构建容器镜像/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>呵呵哒</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年5月18日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/05/17/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A804-containerd%E7%9A%84%E9%AB%98%E9%98%B6%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7nerdctl/" title="重学容器04: containerd的高阶命令行工具nerdctl">
+                        <span class="hidden-mobile">重学容器04: containerd的高阶命令行工具nerdctl</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
