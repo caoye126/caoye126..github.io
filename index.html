@@ -222,6 +222,107 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2023/06/19/ansible-%E5%BF%AB%E9%80%9F%E7%94%9F%E6%88%90role%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/" target="_self">
+          ansible-快速生成role目录结构
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/06/19/ansible-%E5%BF%AB%E9%80%9F%E7%94%9F%E6%88%90role%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84/" target="_self">
+        <div>
+          每创建一个 role 都必须至少含有八大目录之一。所以 Ansible 中已内置了一个命令行工具 ansible-galaxy 快速创建 role 的八大目录，减轻我们的工作量。假设该 role 名称是 nginx，用如下命令生成相关目录： 12345678910111213141516171819202122ansible-galaxy init nginxtree.|____.travis.y
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2023-06-19 10:09" pubdate>
+              2023-06-19
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/ansible/" class="category-chain-item">ansible</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/ansible/">#ansible</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
+        <a href="/2023/05/18/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A813-%E5%9C%A8k8s%E9%9B%86%E7%BE%A4%E4%B8%8A%E9%83%A8%E7%BD%B2buildkit/" target="_self">
+          重学容器13: 在k8s集群上部署buildkit
+        </a>
+      </h1>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2023/05/18/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A813-%E5%9C%A8k8s%E9%9B%86%E7%BE%A4%E4%B8%8A%E9%83%A8%E7%BD%B2buildkit/" target="_self">
+        <div>
+          前面已经完成了rootless模式下buildkitd的二进制部署，本节将buildkitd部署到k8s集群中。 具体的环境信息k8s集群版本1.20.7，服务器系统CentOS 7.9，Jenkins Master通过使用kubernetes-plugin使运行job的jenkins slave(pod)在k8s集群上的jenkins namespace内动态创建。 部署buildkitd到k8
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2023-05-18 10:04" pubdate>
+              2023-05-18
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/containerd/">#containerd</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2023/05/18/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A805-%E4%BD%BF%E7%94%A8nerdctl-buildkitd%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F/" target="_self">
           重学容器05: 使用nerdctl + buildkitd构建容器镜像
         </a>
@@ -654,102 +755,6 @@
           </div>
         
         
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2023/03/23/pipeline-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-8-parameters%E8%AF%A6%E8%A7%A3/" target="_self">
-          pipeline-最佳实践-8-parameters详解
-        </a>
-      </h1>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/03/23/pipeline-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-8-parameters%E8%AF%A6%E8%A7%A3/" target="_self">
-        <div>
-          parameters 提供用户在触发pipeline时应提供的参数列表。这些用户指定的参数的值可以通过 params 对象提供给pipeline步骤. 每个参数都有一个 Name 和 Value，具体取决于参数类型。此信息在生成开始时作为环境变量导出，从而允许生成配置的后续部分访问这些值。例如，可以使用{ PARAMETER NAME }语法(或 Windows 上的% PARAMETER NAM
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-03-23 14:46" pubdate>
-              2023-03-23
-            </time>
-          </div>
-        
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2023/03/21/pipeline-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-6-%E5%A6%82%E4%BD%95%E5%BE%AA%E7%8E%AF/" target="_self">
-          pipeline-最佳实践-6-如何循环
-        </a>
-      </h1>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/03/21/pipeline-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-6-%E5%A6%82%E4%BD%95%E5%BE%AA%E7%8E%AF/" target="_self">
-        <div>
-          pipeline中 使用 each 方法来遍历 列表，列表中元素 用 it 来代替。 1234567891011121314151617181920212223242526272829303132333435// 列表example_list = [ &#x27;golang&#x27;, &#x27;shell&#x27;, &#x27;python&#x27;, &#x27;java&#x27
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-03-21 20:57" pubdate>
-              2023-03-21
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/jenkins/" class="category-chain-item">jenkins</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/jenkins/">#jenkins</a>
-            
-              <a href="/tags/pipeline/">#pipeline</a>
-            
-          </div>
         
       </div>
     </article>

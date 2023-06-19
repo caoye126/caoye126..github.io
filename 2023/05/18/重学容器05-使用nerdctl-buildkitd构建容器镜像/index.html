@@ -24,7 +24,7 @@
 <meta property="og:description" content="1.容器核心技术和Docker的创新:镜像技术容器技术主要包括Cgroup和Namesapce这两个内核级别的特性。 Cgroup是control group的缩写即控制组，主要用来做资源控制，可以将一组进程放到一个控制组里，通过给这个控制组分配可用资源，达到控制这组进程可用资源的目的，对不同资源的具体管理是由各个子系统分工完成的，例如cpu控制cpu使用率，memory控制内存的使用上限等等。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-05-18T01:34:56.000Z">
-<meta property="article:modified_time" content="2023-05-18T01:50:17.683Z">
+<meta property="article:modified_time" content="2023-05-18T01:52:10.934Z">
 <meta property="article:author" content="呵呵哒">
 <meta property="article:tag" content="containerd">
 <meta name="twitter:card" content="summary_large_image">
@@ -220,7 +220,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          7.2k 字
+          7.1k 字
         
       </span>
     
@@ -304,13 +304,13 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">cp -R /usr/share/zoneinfo .<br>nerdctl build -t base-busybox .<br></code></pre></td></tr></table></figure>
 
 <p>将前面构建的两个基础镜像推送到镜像仓库:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl image tag base-alpine:latest harbor.mycompany.com/base/base-alpine:latest<br>nerdctl image tag base-busybox:latest harbor.mycompany.com/base/base-busybox:latest<br><br>nerdctl login -u username -p password harbor.mycompany.com<br><br>nerdctl push harbor.mycompany.com/base/base-alpine:latest<br>nerdctl push harbor.mycompany.com/base/base-busybox:<br></code></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">nerdctl image tag base-alpine:latest caoye126/base/base-alpine:latest<br>nerdctl image tag base-busybox:latest caoye126/base/base-busybox:latest<br><br>nerdctl login -u username -p password caoye126<br><br>nerdctl push caoye126/base/base-alpine:latest<br>nerdctl push caoye126/base/base-busybox:<br></code></pre></td></tr></table></figure>
 
 <p>5.编写Web应用并完成镜像构建<br>下面我们用go写一个简单hello world的web应用main.go:</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br> <span class="hljs-string">&quot;io&quot;</span><br> <span class="hljs-string">&quot;log&quot;</span><br> <span class="hljs-string">&quot;net/http&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br> handler := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;<br>  io.WriteString(w, <span class="hljs-string">&quot;Hello, world!\n&quot;</span>)<br> &#125;<br> http.HandleFunc(<span class="hljs-string">&quot;/hello&quot;</span>, handler)<br> err := http.ListenAndServe(<span class="hljs-string">&quot;:8080&quot;</span>, <span class="hljs-literal">nil</span>)<br> <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>  log.Fatal(err)<br> &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <p>编写构建这个程序的Dockerfile：</p>
-<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> golang:<span class="hljs-number">1.16</span>.<span class="hljs-number">4</span>-alpine3.<span class="hljs-number">13</span> as builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /go/src/hello</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> main.go .</span><br><span class="hljs-keyword">ENV</span> GO111MODULE=off<br><span class="hljs-keyword">RUN</span><span class="language-bash"> go build .</span><br><br><span class="hljs-keyword">FROM</span> harbor.mycompany.com/base/base-alpine:latest<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app/</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=0 /go/src/hello/hello .</span><br><span class="hljs-keyword">USER</span> nobody<br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;./hello&quot;</span>]</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">8080</span><br></code></pre></td></tr></table></figure>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> golang:<span class="hljs-number">1.16</span>.<span class="hljs-number">4</span>-alpine3.<span class="hljs-number">13</span> as builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /go/src/hello</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> main.go .</span><br><span class="hljs-keyword">ENV</span> GO111MODULE=off<br><span class="hljs-keyword">RUN</span><span class="language-bash"> go build .</span><br><br><span class="hljs-keyword">FROM</span> caoye126/base/base-alpine:latest<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app/</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=0 /go/src/hello/hello .</span><br><span class="hljs-keyword">USER</span> nobody<br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;./hello&quot;</span>]</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">8080</span><br></code></pre></td></tr></table></figure>
 
 <p>这里使用多阶段构建，golang:1.16.4-alpine3.13只在构建阶段会用到，go build出的二进制文件在构建的第二阶段被拷贝到base-alpine中。 使用多阶段构建可以确保构建出的应用服务镜像体积尽可能的小。</p>
 <p>构建这个程序的镜像:</p>
@@ -389,6 +389,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2023/05/18/%E9%87%8D%E5%AD%A6%E5%AE%B9%E5%99%A813-%E5%9C%A8k8s%E9%9B%86%E7%BE%A4%E4%B8%8A%E9%83%A8%E7%BD%B2buildkit/" title="重学容器13: 在k8s集群上部署buildkit">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">重学容器13: 在k8s集群上部署buildkit</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
